@@ -6,7 +6,7 @@ public class Connect {
 
     // Nom du pilote JDBC et URL de la base de données
     private final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
-    private final String DB_URL = "jdbc:mariadb://localhost:3306/medicaments"; //changer l'hôte ou la base de données
+    private final String DB_URL = "jdbc:mariadb://localhost:3306/Medicaments"; //changer l'hôte ou la base de données
     //  Identifiants de la base de données
     private final String USER = "root";
     private final String PASS = "";

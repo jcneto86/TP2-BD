@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eclipse-userlibraries>
+  <library name="mariadb-java-client-2.2.3">
+    <archive path="/Users/jcneto/IdeaProjects/TP2-BD/mariadb-java-client-2.2.3.jar" />
+  </library>
+</eclipse-userlibraries>
+

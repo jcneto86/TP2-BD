@@ -5,9 +5,11 @@ public class Menu {
     /* ----------------------------------------------------------------------------------------- */
     Scanner sc = new Scanner(System.in);
     Connect baseDonnees = new Connect();
+
     /* ----------------------------------------------------------------------------------------- */
     public Menu() {
     }
+
     /* ----------------------------------------------------------------------------------------- */
     public void execute() {
         boolean boucle = true;
@@ -47,6 +49,7 @@ public class Menu {
         sc.close();
         baseDonnees.close();
     }
+
     /* ----------------------------------------------------------------------------------------- */
     private static void clear() {
         // vide le contenu du terminal
@@ -61,19 +64,20 @@ public class Menu {
             System.out.print("\033[H\033[2J");
         }
     }
+
     /* ----------------------------------------------------------------------------------------- */
     private void menuPrincipal() {
         clear();
         System.out.println();
         System.out.println("\t\tMenu principal");
         System.out.println("\t-----------------------------------------------------");
-        System.out.println("\t 1. Affichage de la liste de tous les patients");
-        System.out.println("\t 2. Affichage de la liste de tous les patients allergiques à un médicament");
-        System.out.println("\t 3. Ajout d’un nouveau patient");
-        System.out.println("\t 4. Suppression d’un patient");
-        System.out.println("\t 5. (à faire) Entrée d'un médicament");
-        System.out.println("\t 6. (à faire) Suppression d'un médicament");
-        System.out.println("\t 7. (à faire) Ajout d'une allergie à un patient");
+        System.out.println("\t 1. Affichage de la liste de tous les étudiants de l’école");
+        System.out.println("\t 2. Affichage de la liste des étudiants d’un cours");
+        System.out.println("\t 3. Ajout d’un nouvel étudiant");
+        System.out.println("\t 4. Suppression d’un étudiant");
+        System.out.println("\t 5. Inscription d’un étudiant à un cours");
+        System.out.println("\t 6. Désinscription d’un étudiant à un cours");
+        System.out.println("\t 7. Entrée ou modification de la note d’un étudiant à un cours");
         System.out.println("\t 8. Sortir de l'application");
         System.out.println("\t------------------------------------------------------");
         System.out.println();
@@ -81,37 +85,40 @@ public class Menu {
         System.out.println();
         System.out.println();
     }
+
     /* ----------------------------------------------------------------------------------------- */
     private void sousMenu(int menuPrincipalChoix) {
         clear();
         switch (menuPrincipalChoix) {
             /* ----------------------------------------------------------------------------------------- */
             case 1: {
-                // 1. La liste de tous les patients
+                // 1. La liste de tous les étudiants
                 System.out.println();
                 System.out.println("---------------------------");
-                System.out.println("liste de tous les patients\n");
-                System.out.println("Nom\t\t\tPrénom\t\t\tNuméro de Patient\tSexe\t\tAge\t\tQt Allergies");
+                System.out.println("liste de tous les étudiants\n");
+                System.out.println("NumeroDossier\t\t\tCodePermanent\t\t\tNom de étudiants\t\tMoyennes");
                 System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
                 System.out.println(baseDonnees.traiterLigne(
-                        "SELECT p.nom,p.prenom,p.nopatient,p.sexe,p.age,COUNT(a.nomedicament) " +
-                                "FROM patient AS p " +
-                                "LEFT JOIN allergie AS a " +
-                                "ON p.nopatient=a.nopatient " +
-                                "GROUP BY p.nopatient " +
-                                "ORDER BY p.nopatient;"));
+                        "SELECT et.NumeroDossier, et.CodePermanent, et.Nom,  ROUND(AVG(ec.note), 2) as Moyennes " +
+                                "FROM etudiant as et " +
+                                "INNER JOIN etudiant_cours AS ec " +
+                                "ON ec.NumeroDossier = et.NumeroDossier " +
+                                "WHERE ec.note IS NOT NULL " +
+                                "GROUP BY et.NumeroDossier " +
+                                "ORDER BY et.NumeroDossier"));
 
             }
             break;
             /* ----------------------------------------------------------------------------------------- */
             case 2: {
-                // 2. Affichage de la liste de tous les patients allergiques à un médicament
+                // 2. Affichage de la liste de tous la liste des étudiants d’un cours
                 System.out.println();
                 ArrayList<String> Liste = new ArrayList<String>();
-                Liste = baseDonnees.traiterColonne(
-                        "SELECT description "
-                                + "FROM medicament "
-                                + "ORDER BY description");
+                Liste =
+                        baseDonnees.traiterColonne(
+                        "SELECT NumeroCours, Titre "
+                                + "FROM cours "
+                                + "ORDER BY NumeroCours");
                 int i = 0;
                 for (String choix : Liste) {
                     System.out.print(++i);
@@ -136,35 +143,24 @@ public class Menu {
                         selection = -1;
                     }
                 }
-                System.out.println("Patients allergiques au médicament " + Liste.get(selection - 1));
+                System.out.println("liste des étudiants du cours  " + Liste.get(selection - 1));
+                String NumeroCours = Liste.get(selection-1).split(" ")[0] ;
                 System.out.println("---------------------------------------------------------------------------------------------------------------------------");
-                System.out.println("Nom\t\t\tPrénom\t2\t\tNuméro de Patient\tSexe\t\t\tAge");
+                System.out.println("Note\t\t\tNumero Dossier\t\tCode Permanent\t");
                 System.out.println("---------------------------------------------------------------------------------------------------------------------------");
                 System.out.println(baseDonnees.traiterLigne(
-                        "SELECT p.nom,p.prenom,p.nopatient,p.sexe,p.age "
-                                + "FROM patient AS p "
-                                + "INNER JOIN allergie AS a "
-                                + "ON p.nopatient=a.nopatient "
-                                + "INNER JOIN medicament AS m "
-                                + "ON a.nomedicament = m.nomedicament "
-                                + "WHERE m.description='"
-                                + Liste.get(selection - 1) + "' "
-                                + "ORDER BY p.nopatient")
+                        "SELECT ec.note, et.NumeroDossier, et.CodePermanent "
+                                + "FROM etudiant AS et "
+                                + "INNER JOIN etudiant_cours AS ec "
+                                + "ON ec.NumeroDossier = et.NumeroDossier "
+                                + "WHERE ec.NumeroCours = " + NumeroCours
+                                + " ORDER BY et.CodePermanent")
                 );
-                System.out.print("Age moyen: ");
+                System.out.print("Moyen du group: ");
                 System.out.println(baseDonnees.traiterLigne(
-                        "SELECT FORMAT(AVG(p.age),0) "
-                                + "FROM patient AS p "
-                                + "INNER JOIN allergie AS a "
-                                + "ON p.nopatient=a.nopatient "
-                                + "INNER JOIN medicament AS m "
-                                + "ON a.nomedicament = m.nomedicament "
-                                + "WHERE m.description='"
-                                + Liste.get(selection - 1) + "' "
-                                + "ORDER BY p.nopatient"
+                        "SELECT ROUND(AVG(ec.note), 2) "
+                                + "FROM etudiant_cours AS ec"
                 ));
-
-
                 System.out.println();
                 System.out.println("---------------------------");
 
@@ -172,52 +168,40 @@ public class Menu {
             break;
             /* ----------------------------------------------------------------------------------------- */
             case 3: {
-                // 3. Ajout d'un nouveau patient
+                // 3. Ajout d’un nouvel étudiant
+                String codePermanent = null;
                 String nom = null;
-                String prenom = null;
-                String sexe = null;
-                Integer age = null;
                 System.out.println();
                 System.out.println("---------------------------");
-                System.out.println("ajout d'un patient\n");
+                System.out.println("ajout d'un étudiant\n");
                 System.out.println("---------------------------");
                 System.out.println();
-                System.out.print("entrer le nom du patient: ");
+                System.out.print("entrer le code permanent du étudiant: ");
+                codePermanent = sc.nextLine();
+                System.out.print("entrer le nom du étudiant: ");
                 nom = sc.nextLine();
-                System.out.print("entrer le prénom du patient: ");
-                prenom = sc.nextLine();
-                System.out.print("entrer le sexe du patient : ");
-                sexe = sc.nextLine();
-                System.out.print("entrer l'âge du patient : ");
-                try {
-                    age = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    age = -1;
-                }
                 System.out.println(baseDonnees.traiterMiseajour(
-                        "INSERT INTO patient (nom, prenom, sexe, age) "
+                        "INSERT INTO etudiant (CodePermanent, nom) "
                                 + "VALUES ("
-                                + "'" + nom + "',"
-                                + "'" + prenom + "',"
-                                + "'" + sexe + "',"
-                                + "" + age + ")"));
+                                + "'" + codePermanent + "',"
+                                + "'" + nom + "')"));
 
             }
             break;
             /* ----------------------------------------------------------------------------------------- */
             case 4: {
-                // 4. Suppression d'un patient
+                // 4. Suppression d’un étudiant
                 System.out.println();
                 System.out.println("---------------------------");
-                System.out.println("Suppression d'un patient");
-                System.out.println("Choisir le patient à supprimer:");
+                System.out.println("Suppression d'un étudiant");
+                System.out.println("Choisir le étudiant à supprimer:");
                 System.out.println("---------------------------");
                 System.out.println("");
                 ArrayList<String> Liste = new ArrayList<String>();
                 Liste =
                         baseDonnees.traiterColonne(
-                                "SELECT nopatient, nom , prenom "
-                                        + "FROM patient "
+                                "SELECT NumeroDossier, CodePermanent , nom "
+                                        + "FROM etudiant "
                                         + "ORDER BY nom");
                 int i = 0;
                 for (String choix : Liste) {
@@ -244,164 +228,70 @@ public class Menu {
                     }
                 }
                 System.out.println(Liste.get(selection - 1));
-                String patient = Liste.get(selection - 1).split(" ")[0];
+                String etudiant = Liste.get(selection - 1).split(" ")[0];
                 System.out.println(baseDonnees.traiterMiseajour(
                         "DELETE "
-                                + "FROM patient "
-                                + "WHERE nopatient='"
-                                + patient + "' ")
+                                + "FROM etudiant "
+                                + "WHERE NumeroDossier='"
+                                + etudiant + "' ")
                 );
                 System.out.println("---------------------------");
-                System.out.println("Le patient " + Liste.get(selection - 1) + " a été effacé");
+                System.out.println("L'etudiant " + Liste.get(selection - 1) + " a été effacé");
                 System.out.println("---------------------------");
             }
             break;
             /* ----------------------------------------------------------------------------------------- */
             case 5: {
-                //  5. (à faire) Entrée d'un médicament"
-                String description = null;
-                Integer noFabricant = null;
-                Integer noMedicamentFabricant = null;
-                Integer prix = null;
+                //  5. Inscription d’un étudiant à un cours"
                 System.out.println();
                 System.out.println("---------------------------");
-                System.out.println("ajout d'un médicament\n");
-                System.out.println("---------------------------");
-                System.out.println();
-                System.out.print("entrer le description du médicament: ");
-                description = sc.nextLine();
-                System.out.print("entrer le nombre du fabricant: ");
-                try {
-                    noFabricant = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    noFabricant = -1;
-                }
-                System.out.print("entrer le nombre du fabricant du médicament: ");
-                try {
-                    noMedicamentFabricant = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    noMedicamentFabricant = -1;
-                }
-                System.out.print("entrer le prix du médicament : ");
-                try {
-                    prix = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    prix = -1;
-                }
-                System.out.println(baseDonnees.traiterMiseajour(
-                        "INSERT INTO patient (description, noFabricant, noMedicamentFabricant, prix) "
-                                + "VALUES ("
-                                + "'" + description + "',"
-                                + "" + noFabricant + ","
-                                + "" + noMedicamentFabricant + ","
-                                + "" + prix + ")"));
-
-            }
-            break;
-            /* ----------------------------------------------------------------------------------------- */
-            case 6: {
-                // 6. (à faire) Suppression d'un médicament
-                System.out.println();
-                System.out.println("---------------------------");
-                System.out.println("Suppression d'un médicament");
-                System.out.println("Choisir le médicament à supprimer:");
+                System.out.println("Ajout d'une étudiant à un cours");
+                System.out.println("Choisir le étudiant:");
                 System.out.println("---------------------------");
                 System.out.println("");
                 ArrayList<String> Liste = new ArrayList<String>();
                 Liste =
                         baseDonnees.traiterColonne(
-                                "SELECT noMedicament, description, noFabricant, noMedicamentFabricant, prix "
-                                        + "FROM medicament "
-                                        + "ORDER BY noMedicament");
-                int i = 0;
-                for (String choix : Liste) {
-                    System.out.print(++i);
-                    System.out.print(") ");
-                    System.out.println(choix);
-                }
-                System.out.println("---------------------------");
-                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
-                System.out.println();
-                int selection;
-                try {
-                    selection = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    selection = -1;
-                }
-                while (selection < 1 || selection > Liste.size()) {
-                    System.out.println("Mauvaise sélection");
-                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
-                    try {
-                        selection = Integer.parseInt(sc.nextLine());
-                    } catch (NumberFormatException e) {
-                        selection = -1;
-                    }
-                }
-                System.out.println(Liste.get(selection - 1));
-                String noMedicament = Liste.get(selection - 1).split(" ")[0];
-                System.out.println(baseDonnees.traiterMiseajour(
-                        "DELETE "
-                                + "FROM medicament "
-                                + "WHERE noMedicament='"
-                                + noMedicament + "' ")
-                );
-                System.out.println("---------------------------");
-                System.out.println("Le médicament " + Liste.get(selection - 1) + " a été effacé");
-                System.out.println("---------------------------");
-            }
-            break;
-            /* ----------------------------------------------------------------------------------------- */
-            case 7: {
-                // 7. (à faire) Ajout d'une allergie à un patient
-                System.out.println();
-                System.out.println("---------------------------");
-                System.out.println("Ajout d'une allergie à un patient");
-                System.out.println("Choisir le médicament:");
-                System.out.println("---------------------------");
-                System.out.println("");
-                ArrayList<String> Liste = new ArrayList<String>();
-                Liste =
-                        baseDonnees.traiterColonne(
-                                "SELECT noMedicament, description, noFabricant, noMedicamentFabricant, prix "
-                                        + "FROM medicament "
-                                        + "ORDER BY noMedicament");
-                int i = 0;
-                for (String choix : Liste) {
-                    System.out.print(++i);
-                    System.out.print(") ");
-                    System.out.println(choix);
-                }
-                System.out.println("---------------------------");
-                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
-                System.out.println();
-                int selection;
-                try {
-                    selection = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    selection = -1;
-                }
-                while (selection < 1 || selection > Liste.size()) {
-                    System.out.println("Mauvaise sélection");
-                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
-                    try {
-                        selection = Integer.parseInt(sc.nextLine());
-                    } catch (NumberFormatException e) {
-                        selection = -1;
-                    }
-                }
-                System.out.println(Liste.get(selection - 1));
-                String noMedicament = Liste.get(selection - 1).split(" ")[0];
-                System.out.println();
-                System.out.println("---------------------------");
-                System.out.println("Ajout d'une allergie à un patient");
-                System.out.println("Choisir le patient:");
-                System.out.println("---------------------------");
-                System.out.println("");
-                Liste =
-                        baseDonnees.traiterColonne(
-                                "SELECT nopatient, nom , prenom "
-                                        + "FROM patient "
+                                "SELECT NumeroDossier, CodePermanent, nom "
+                                        + "FROM etudiant "
                                         + "ORDER BY nom");
+                int i = 0;
+                for (String choix : Liste) {
+                    System.out.print(++i);
+                    System.out.print(") ");
+                    System.out.println(choix);
+                }
+                System.out.println("---------------------------");
+                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                System.out.println();
+                int selection;
+                try {
+                    selection = Integer.parseInt(sc.nextLine());
+                } catch (NumberFormatException e) {
+                    selection = -1;
+                }
+                while (selection < 1 || selection > Liste.size()) {
+                    System.out.println("Mauvaise sélection");
+                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                    try {
+                        selection = Integer.parseInt(sc.nextLine());
+                    } catch (NumberFormatException e) {
+                        selection = -1;
+                    }
+                }
+                System.out.println(Liste.get(selection - 1));
+                String NumeroDossier = Liste.get(selection - 1).split(" ")[0];
+                System.out.println();
+                System.out.println("---------------------------");
+                System.out.println("Ajout d'une étudiant à un cours");
+                System.out.println("Choisir le cours:");
+                System.out.println("---------------------------");
+                System.out.println("");
+                Liste =
+                        baseDonnees.traiterColonne(
+                                "SELECT NumeroCours, Titre "
+                                        + "FROM cours "
+                                        + "ORDER BY Titre");
                 i = 0;
                 for (String choix : Liste) {
                     System.out.print(++i);
@@ -426,12 +316,204 @@ public class Menu {
                     }
                 }
                 System.out.println(Liste.get(selection - 1));
-                String noPatient = Liste.get(selection - 1).split(" ")[0];
+                String NumeroCours = Liste.get(selection - 1).split(" ")[0];
                 System.out.println(baseDonnees.traiterMiseajour(
-                        "INSERT INTO allergie (noPatient, noMedicament) "
+                        "INSERT INTO etudiant_cours (NumeroDossier, NumeroCours) "
                                 + "VALUES ("
-                                + "" + noPatient + ","
-                                + "" + noMedicament + ")"));
+                                + "" + NumeroDossier + ","
+                                + "" + NumeroCours + ")"));
+
+            }
+            break;
+            /* ----------------------------------------------------------------------------------------- */
+            case 6: {
+                // 6. Désinscription d’un étudiant à un cours
+                System.out.println();
+                System.out.println("---------------------------");
+                System.out.println("Désinscription d’un étudiant à un cour");
+                System.out.println("Choisir le étudiant:");
+                System.out.println("---------------------------");
+                System.out.println("");
+                ArrayList<String> Liste = new ArrayList<String>();
+                Liste =
+                        baseDonnees.traiterColonne(
+                                "SELECT NumeroDossier, CodePermanent, nom "
+                                        + "FROM etudiant "
+                                        + "ORDER BY nom"
+                        );
+                int i = 0;
+                for (String choix : Liste) {
+                    System.out.print(++i);
+                    System.out.print(") ");
+                    System.out.println(choix);
+                }
+                System.out.println("---------------------------");
+                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                System.out.println();
+                int selection;
+                try {
+                    selection = Integer.parseInt(sc.nextLine());
+                } catch (NumberFormatException e) {
+                    selection = -1;
+                }
+                while (selection < 1 || selection > Liste.size()) {
+                    System.out.println("Mauvaise sélection");
+                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                    try {
+                        selection = Integer.parseInt(sc.nextLine());
+                    } catch (NumberFormatException e) {
+                        selection = -1;
+                    }
+                }
+                System.out.println(Liste.get(selection - 1));
+                String NumeroDossier = Liste.get(selection - 1).split(" ")[0];
+                System.out.println(" WoW " + NumeroDossier);
+                System.out.println();
+                System.out.println("---------------------------");
+                System.out.println("Désinscription d’un étudiant à un cour");
+                System.out.println("Choisir le cours:");
+                System.out.println("---------------------------");
+                System.out.println("");
+                Liste =
+                        baseDonnees.traiterColonne(
+                                "SELECT co.NumeroCours, co.Titre "
+                                + "FROM cours as co "
+                                + "INNER JOIN etudiant_cours as ec "
+                                + "ON co.NumeroCours = ec.NumeroCours "
+                                + "INNER JOIN etudiant as et "
+                                + "ON ec.NumeroDossier = " + NumeroDossier
+                                + " GROUP BY co.Titre "
+                                + "ORDER BY co.Titre"
+                        );
+                i = 0;
+                for (String choix : Liste) {
+                    System.out.print(++i);
+                    System.out.print(") ");
+                    System.out.println(choix);
+                }
+                System.out.println("---------------------------");
+                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                System.out.println();
+                try {
+                    selection = Integer.parseInt(sc.nextLine());
+                } catch (NumberFormatException e) {
+                    selection = -1;
+                }
+                while (selection < 1 || selection > Liste.size()) {
+                    System.out.println("Mauvaise sélection");
+                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                    try {
+                        selection = Integer.parseInt(sc.nextLine());
+                    } catch (NumberFormatException e) {
+                        selection = -1;
+                    }
+                }
+                System.out.println(Liste.get(selection - 1));
+                String NumeroCours = Liste.get(selection - 1).split(" ")[0];
+                System.out.println(baseDonnees.traiterMiseajour(
+                        "DELETE "
+                                + "FROM etudiant_cours "
+                                + "WHERE NumeroCours ='"
+                                + NumeroCours + "' ")
+                );
+            }
+            break;
+            /* ----------------------------------------------------------------------------------------- */
+            case 7: {
+                // 7. Entrée ou modification de la note d’un étudiant à un cours
+                System.out.println();
+                System.out.println("---------------------------");
+                System.out.println("Désinscription d’un étudiant à un cour");
+                System.out.println("Choisir le étudiant:");
+                System.out.println("---------------------------");
+                System.out.println("");
+                ArrayList<String> Liste = new ArrayList<String>();
+                Liste =
+                        baseDonnees.traiterColonne(
+                                "SELECT NumeroDossier, CodePermanent, nom "
+                                        + "FROM etudiant "
+                                        + "ORDER BY nom"
+                        );
+                int i = 0;
+                for (String choix : Liste) {
+                    System.out.print(++i);
+                    System.out.print(") ");
+                    System.out.println(choix);
+                }
+                System.out.println("---------------------------");
+                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                System.out.println();
+                int selection;
+                try {
+                    selection = Integer.parseInt(sc.nextLine());
+                } catch (NumberFormatException e) {
+                    selection = -1;
+                }
+                while (selection < 1 || selection > Liste.size()) {
+                    System.out.println("Mauvaise sélection");
+                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                    try {
+                        selection = Integer.parseInt(sc.nextLine());
+                    } catch (NumberFormatException e) {
+                        selection = -1;
+                    }
+                }
+                System.out.println(Liste.get(selection - 1));
+                String NumeroDossier = Liste.get(selection - 1).split(" ")[0];
+                System.out.println();
+                System.out.println("---------------------------");
+                System.out.println("Désinscription d’un étudiant à un cour");
+                System.out.println("Choisir le cours:");
+                System.out.println("---------------------------");
+                System.out.println("");
+                Liste =
+                        baseDonnees.traiterColonne(
+                                "SELECT co.NumeroCours, co.Titre "
+                                        + "FROM cours as co "
+                                        + "INNER JOIN etudiant_cours as ec "
+                                        + "ON co.NumeroCours = ec.NumeroCours "
+                                        + "INNER JOIN etudiant as et "
+                                        + "ON ec.NumeroDossier = " + NumeroDossier
+                                        + " GROUP BY co.Titre "
+                                        + "ORDER BY co.Titre"
+                        );
+                i = 0;
+                for (String choix : Liste) {
+                    System.out.print(++i);
+                    System.out.print(") ");
+                    System.out.println(choix);
+                }
+                System.out.println("---------------------------");
+                System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                System.out.println();
+                try {
+                    selection = Integer.parseInt(sc.nextLine());
+                } catch (NumberFormatException e) {
+                    selection = -1;
+                }
+                while (selection < 1 || selection > Liste.size()) {
+                    System.out.println("Mauvaise sélection");
+                    System.out.print("SVP, sélectionner une option de 1 à " + String.valueOf(Liste.size()));
+                    try {
+                        selection = Integer.parseInt(sc.nextLine());
+                    } catch (NumberFormatException e) {
+                        selection = -1;
+                    }
+                }
+                System.out.println(Liste.get(selection - 1));
+                String NumeroCours = Liste.get(selection - 1).split(" ")[0];
+                System.out.println();
+                System.out.println("---------------------------");
+                System.out.println("ajout d'un étudiant\n");
+                System.out.println("---------------------------");
+                System.out.println();
+                System.out.print("entrer la note du étudiant: ");
+                Double note = sc.nextDouble();
+                System.out.println(baseDonnees.traiterMiseajour(
+                        "UPDATE etudiant_cours "
+                        + "SET note = " + note
+                        + " WHERE NumeroCours = " + NumeroCours)
+                );
             }
             break;
         }
